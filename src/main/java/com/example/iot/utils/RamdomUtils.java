@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public class RamdomUtils {
 
     public static BigDecimal ramdomValue(){
-        return rangBigDecimal(8,12);
+        return rangBigDecimal(42,46);
     }
 
     private static BigDecimal rangBigDecimal(int min, int max) {

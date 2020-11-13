@@ -3,16 +3,20 @@ package com.example.iot.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.iot.entity.IotDevice;
 import com.example.iot.mapper.IotDeviceMapper;
+import com.example.iot.nmodel.IotDeviceModel;
 import com.example.iot.service.IotDeviceService;
 import com.example.iot.utils.JsonUtils;
 import com.example.iot.utils.RamdomUtils;
+import com.example.iot.utils.ScheduleUtils;
 import com.example.iot.utils.UUIDUtil;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.jms.Queue;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -32,11 +36,16 @@ public class IotDeviceServiceImpl extends ServiceImpl<IotDeviceMapper, IotDevice
     Queue queue;
     @Autowired
     JmsMessagingTemplate jmsMessagingTemplate;
+    @Autowired
+    Scheduler scheduler;
 
 
     @PostConstruct
     public void init() {
         list = baseMapper.selectList(null);
+        list.stream().forEach(iotDevice -> {
+            ScheduleUtils.createScheduleJob(scheduler, iotDevice);
+        });
     }
 
     @Override
@@ -73,5 +82,22 @@ public class IotDeviceServiceImpl extends ServiceImpl<IotDeviceMapper, IotDevice
             });
             saveOrUpdateBatch(list);
         }
+    }
+
+    @Override
+    public void schedule(IotDevice iotDevice) {
+        iotDevice.setValue(iotDevice.getValue().add(new BigDecimal(1)));
+        iotDevice.setTimestamp(System.currentTimeMillis());
+        IotDeviceModel build = IotDeviceModel.builder()
+                .id(iotDevice.getId())
+                .deviceId(iotDevice.getDeviceId())
+                .key(iotDevice.getKey())
+                .value(iotDevice.getValue())
+                .macAddress(iotDevice.getMacAddress())
+                .timestamp(iotDevice.getTimestamp())
+                .name(iotDevice.getName())
+                .build();
+        jmsMessagingTemplate.convertAndSend(queue, JsonUtils.toString(build));
+        saveOrUpdate(iotDevice);
     }
 }

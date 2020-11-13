@@ -16,7 +16,7 @@ public class Task {
     @Autowired
     IotDeviceService iotDeviceService;
 
-    @Scheduled(cron = "*/10 * * * * ?")
+    //@Scheduled(cron = "*/10 * * * * ?")
     public void execute() {
         log.debug("start sheduler task:{}", DateUtil.format(new Date()));
         iotDeviceService.schedule();

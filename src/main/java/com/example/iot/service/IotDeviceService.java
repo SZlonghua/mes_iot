@@ -49,4 +49,6 @@ public interface IotDeviceService extends IService<IotDevice> {
     Boolean delete(List<String> ids);
 
     void schedule();
+
+    void schedule(IotDevice iotDevice);
 }
